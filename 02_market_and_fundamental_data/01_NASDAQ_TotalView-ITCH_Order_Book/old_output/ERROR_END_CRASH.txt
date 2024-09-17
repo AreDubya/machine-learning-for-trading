@@ -1,0 +1,130 @@
+---------------------------------------------------------------------------
+NotImplementedError                       Traceback (most recent call last)
+File ~/miniforge3/envs/02_ml4t/lib/python3.9/site-packages/cudf/pandas/fast_slow_proxy.py:896, in _fast_slow_function_call(func, *args, **kwargs)
+    891 with nvtx.annotate(
+    892     "EXECUTE_FAST",
+    893     color=_CUDF_PANDAS_NVTX_COLORS["EXECUTE_FAST"],
+    894     domain="cudf_pandas",
+    895 ):
+--> 896     fast_args, fast_kwargs = _fast_arg(args), _fast_arg(kwargs)
+    897     result = func(*fast_args, **fast_kwargs)
+
+File ~/miniforge3/envs/02_ml4t/lib/python3.9/site-packages/cudf/pandas/fast_slow_proxy.py:1046, in _fast_arg(arg)
+   1045 seen: set[int] = set()
+-> 1046 return _transform_arg(arg, "_fsproxy_fast", seen)
+
+File ~/miniforge3/envs/02_ml4t/lib/python3.9/site-packages/cudf/pandas/fast_slow_proxy.py:973, in _transform_arg(arg, attribute_name, seen)
+    971 if type(arg) is tuple:
+    972     # Must come first to avoid infinite recursion
+--> 973     return tuple(_transform_arg(a, attribute_name, seen) for a in arg)
+    974 elif hasattr(arg, "__getnewargs_ex__"):
+    975     # Partial implementation of to reconstruct with
+    976     # transformed pieces
+    977     # This handles scipy._lib._bunch._make_tuple_bunch
+
+File ~/miniforge3/envs/02_ml4t/lib/python3.9/site-packages/cudf/pandas/fast_slow_proxy.py:973, in <genexpr>(.0)
+    971 if type(arg) is tuple:
+    972     # Must come first to avoid infinite recursion
+--> 973     return tuple(_transform_arg(a, attribute_name, seen) for a in arg)
+    974 elif hasattr(arg, "__getnewargs_ex__"):
+    975     # Partial implementation of to reconstruct with
+    976     # transformed pieces
+    977     # This handles scipy._lib._bunch._make_tuple_bunch
+
+File ~/miniforge3/envs/02_ml4t/lib/python3.9/site-packages/cudf/pandas/fast_slow_proxy.py:973, in _transform_arg(arg, attribute_name, seen)
+    971 if type(arg) is tuple:
+    972     # Must come first to avoid infinite recursion
+--> 973     return tuple(_transform_arg(a, attribute_name, seen) for a in arg)
+    974 elif hasattr(arg, "__getnewargs_ex__"):
+    975     # Partial implementation of to reconstruct with
+    976     # transformed pieces
+    977     # This handles scipy._lib._bunch._make_tuple_bunch
+
+File ~/miniforge3/envs/02_ml4t/lib/python3.9/site-packages/cudf/pandas/fast_slow_proxy.py:973, in <genexpr>(.0)
+    971 if type(arg) is tuple:
+    972     # Must come first to avoid infinite recursion
+--> 973     return tuple(_transform_arg(a, attribute_name, seen) for a in arg)
+    974 elif hasattr(arg, "__getnewargs_ex__"):
+    975     # Partial implementation of to reconstruct with
+    976     # transformed pieces
+    977     # This handles scipy._lib._bunch._make_tuple_bunch
+
+File ~/miniforge3/envs/02_ml4t/lib/python3.9/site-packages/cudf/pandas/fast_slow_proxy.py:956, in _transform_arg(arg, attribute_name, seen)
+    955 if isinstance(arg, (_FastSlowProxy, _FastSlowProxyMeta, _FunctionProxy)):
+--> 956     typ = getattr(arg, attribute_name)
+    957     if typ is _Unusable:
+
+File ~/miniforge3/envs/02_ml4t/lib/python3.9/site-packages/cudf/pandas/fast_slow_proxy.py:504, in _FastSlowProxy._fsproxy_fast(self)
+    499 """
+    500 Returns the wrapped object. If the wrapped object is of "slow"
+    501 type, replaces it with the corresponding "fast" object before
+    502 returning it.
+    503 """
+--> 504 self._fsproxy_wrapped = self._fsproxy_slow_to_fast()
+    505 return self._fsproxy_wrapped
+
+File ~/miniforge3/envs/02_ml4t/lib/python3.9/site-packages/nvtx/nvtx.py:116, in annotate.__call__.<locals>.inner(*args, **kwargs)
+    115 libnvtx_push_range(self.attributes, self.domain.handle)
+--> 116 result = func(*args, **kwargs)
+    117 libnvtx_pop_range(self.domain.handle)
+
+File ~/miniforge3/envs/02_ml4t/lib/python3.9/site-packages/cudf/pandas/fast_slow_proxy.py:175, in make_final_proxy_type.<locals>._fsproxy_slow_to_fast(self)
+    174 if self._fsproxy_state is _State.SLOW:
+--> 175     return slow_to_fast(self._fsproxy_wrapped)
+    176 return self._fsproxy_wrapped
+
+File ~/miniforge3/envs/02_ml4t/lib/python3.9/site-packages/cudf/pandas/fast_slow_proxy.py:71, in _Unusable.__call__(self, *args, **kwds)
+     70 def __call__(self, *args: Any, **kwds: Any) -> Any:
+---> 71     raise NotImplementedError(
+     72         "Fast implementation not available. "
+     73         "Falling back to the slow implementation"
+     74     )
+
+NotImplementedError: Fast implementation not available. Falling back to the slow implementation
+
+During handling of the above exception, another exception occurred:
+
+KeyError                                  Traceback (most recent call last)
+Cell In[32], line 6
+      3     exit(0)
+      5     stocks = store['R'].loc[:, ['stock_locate', 'stock']]
+----> 6     trades = store['P'].append(store['Q'].rename(columns={'cross_price': 'price'}), sort=False).merge(stocks)
+      8 trades['value'] = trades.shares.mul(trades.price)
+      9 trades['value_share'] = trades.value.div(trades.value.sum())
+
+File ~/miniforge3/envs/02_ml4t/lib/python3.9/site-packages/cudf/pandas/fast_slow_proxy.py:686, in _CallableProxyMixin.__call__(self, *args, **kwargs)
+    685 def __call__(self, *args, **kwargs) -> Any:
+--> 686     result, _ = _fast_slow_function_call(
+    687         # We cannot directly call self here because we need it to be
+    688         # converted into either the fast or slow object (by
+    689         # _fast_slow_function_call) to avoid infinite recursion.
+    690         # TODO: When Python 3.11 is the minimum supported Python version
+    691         # this can use operator.call
+    692         call_operator,
+    693         self,
+    694         args,
+    695         kwargs,
+    696     )
+    697     return result
+
+File ~/miniforge3/envs/02_ml4t/lib/python3.9/site-packages/cudf/pandas/fast_slow_proxy.py:941, in _fast_slow_function_call(func, *args, **kwargs)
+    939         slow_args, slow_kwargs = _slow_arg(args), _slow_arg(kwargs)
+    940         with disable_module_accelerator():
+--> 941             result = func(*slow_args, **slow_kwargs)
+    942 return _maybe_wrap_result(result, func, *args, **kwargs), fast
+
+File ~/miniforge3/envs/02_ml4t/lib/python3.9/site-packages/cudf/pandas/fast_slow_proxy.py:25, in call_operator(fn, args, kwargs)
+     24 def call_operator(fn, args, kwargs):
+---> 25     return fn(*args, **kwargs)
+
+File ~/miniforge3/envs/02_ml4t/lib/python3.9/site-packages/pandas/io/pytables.py:602, in HDFStore.__getitem__(self, key)
+    601 def __getitem__(self, key: str):
+--> 602     return self.get(key)
+
+File ~/miniforge3/envs/02_ml4t/lib/python3.9/site-packages/pandas/io/pytables.py:812, in HDFStore.get(self, key)
+    810 group = self.get_node(key)
+    811 if group is None:
+--> 812     raise KeyError(f"No object named {key} in the file")
+    813 return self._read_group(group)
+
+KeyError: 'No object named P in the file'
